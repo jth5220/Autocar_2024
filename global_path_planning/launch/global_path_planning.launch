@@ -1,0 +1,28 @@
+<launch>
+    <node pkg="swri_transform_util" type="initialize_origin.py" name="initialize_origin" >
+    <!-- <node pkg="mapviz" type="initialize_origin.py" name="initialize_origin" > -->
+  
+      <param name="local_xy_frame" value="mapviz"/>
+      <param name="local_xy_origin" value="swri"/>
+    
+      <!-- <param name="local_xy_origin" value="swri"/> -->
+      <rosparam param="local_xy_origins">
+        [{ name: swri,
+           latitude: 37.631903,
+           longitude: 127.076800,
+           altitude: 233.719,
+           heading: 0.0}
+        ]
+      </rosparam>
+    
+      <remap from="fix" to="/ublox_gps/fix"/>
+  </node>
+  
+    <!-- <node pkg="global_path_planning" type="global_path_planning.py" name="global_path_planning" /> -->
+
+    <!--Mapviz-->
+    <node name="mapviz" type="mapviz" pkg="mapviz">
+        <param name="config" value="$(find global_path_planning)/launch/global_map.mvc"/>
+    </node>    
+    
+</launch>
