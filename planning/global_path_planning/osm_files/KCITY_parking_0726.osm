@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version='0.6' upload='false' generator='JOSM'>
+  <node id='-25355' action='modify' lat='37.2394979823' lon='126.77320358664'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='2' />
+    <tag k='fid' v='-11' />
+    <tag k='x' v='302478.1342363133' />
+    <tag k='y' v='4123764.6288060425' />
+  </node>
+  <node id='-25356' action='modify' lat='37.23911306125' lon='126.77295244035'>
+    <tag k='cngmeters' v='48.186880479302474' />
+    <tag k='code' v='2' />
+    <tag k='fid' v='-11' />
+    <tag k='x' v='302454.8488248447' />
+    <tag k='y' v='4123722.442130451' />
+  </node>
+  <node id='-25357' action='modify' lat='37.23908721843' lon='126.77302248795'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='2' />
+    <tag k='fid' v='-12' />
+    <tag k='x' v='302460.9956012125' />
+    <tag k='y' v='4123719.4283605223' />
+  </node>
+  <node id='-25358' action='modify' lat='37.23947077946' lon='126.77327192576'>
+    <tag k='cngmeters' v='47.98245886582973' />
+    <tag k='code' v='2' />
+    <tag k='fid' v='-12' />
+    <tag k='x' v='302484.1258703571' />
+    <tag k='y' v='4123761.4677112326' />
+  </node>
+  <way id='-579' action='modify'>
+    <nd ref='-25356' />
+    <nd ref='-25357' />
+    <nd ref='-25358' />
+    <nd ref='-25355' />
+    <nd ref='-25356' />
+    <tag k='code' v='2' />
+    <tag k='mission' v='parking' />
+  </way>
+</osm>

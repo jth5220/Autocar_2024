@@ -1,0 +1,10 @@
+<launch>
+  <!-- Sensor tf -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="bl_vldyn" args="+0.7 0 +1.0 0 0 0 1 base_link velodyne"/>
+  
+  <!-- Node -->
+  <node pkg="util" type="autocar_tf.py" name="autocar_tf" />
+  <node pkg="util" type="topic_remap.py" name="topic_remap" />
+  
+</launch> 
+

@@ -1,0 +1,231 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version='0.6' upload='false' generator='JOSM'>
+  <node id='-34966' action='modify' lat='37.23963509848' lon='126.77340186603'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-9' />
+    <tag k='x' v='302496.0824357784' />
+    <tag k='y' v='4123779.4293707903' />
+  </node>
+  <node id='-34967' action='modify' lat='37.2396167366' lon='126.77344628646'>
+    <tag k='cngmeters' v='4.437493091349604' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-9' />
+    <tag k='x' v='302499.975218697' />
+    <tag k='y' v='4123777.299209744' />
+  </node>
+  <node id='-34970' action='modify' lat='37.23984455961' lon='126.77347874754'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-11' />
+    <tag k='x' v='302503.44975384' />
+    <tag k='y' v='4123802.5107784984' />
+  </node>
+  <node id='-34971' action='modify' lat='37.23982959812' lon='126.7735171883'>
+    <tag k='cngmeters' v='3.793899292268817' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-11' />
+    <tag k='x' v='302506.8209241624' />
+    <tag k='y' v='4123800.770410004' />
+  </node>
+  <node id='-34976' action='modify' lat='37.24022811679' lon='126.77315242822'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-14' />
+    <tag k='x' v='302475.5021979275' />
+    <tag k='y' v='4123845.7515994105' />
+  </node>
+  <node id='-34977' action='modify' lat='37.24021383544' lon='126.77318659778'>
+    <tag k='cngmeters' v='3.421799351162178' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-14' />
+    <tag k='x' v='302478.4962083769' />
+    <tag k='y' v='4123844.0956036863' />
+  </node>
+  <node id='-34978' action='modify' lat='37.24022199621' lon='126.77354623243'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-15' />
+    <tag k='x' v='302510.4219512142' />
+    <tag k='y' v='4123844.2504257746' />
+  </node>
+  <node id='-34979' action='modify' lat='37.24019887402' lon='126.77352914765'>
+    <tag k='cngmeters' v='2.980713633650336' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-15' />
+    <tag k='x' v='302508.8459368292' />
+    <tag k='y' v='4123841.7204391295' />
+  </node>
+  <node id='-34992' action='modify' lat='37.2402995235' lon='126.77382898557'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-22' />
+    <tag k='x' v='302535.7083296808' />
+    <tag k='y' v='4123852.26274908' />
+  </node>
+  <node id='-34993' action='modify' lat='37.24031720515' lon='126.77378627361'>
+    <tag k='cngmeters' v='4.268115230399624' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-22' />
+    <tag k='x' v='302531.9653643089' />
+    <tag k='y' v='4123854.3138506976' />
+  </node>
+  <node id='-34994' action='modify' lat='37.24041921459' lon='126.77392124339'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-23' />
+    <tag k='x' v='302544.2052506028' />
+    <tag k='y' v='4123865.351181656' />
+  </node>
+  <node id='-34995' action='modify' lat='37.24039405227' lon='126.77398189436'>
+    <tag k='cngmeters' v='6.063494284756556' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-23' />
+    <tag k='x' v='302549.5201164641' />
+    <tag k='y' v='4123862.4325923026' />
+  </node>
+  <node id='-35000' action='modify' lat='37.24069123908' lon='126.77401008425'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-26' />
+    <tag k='x' v='302552.7966271213' />
+    <tag k='y' v='4123895.3497237535' />
+  </node>
+  <node id='-35001' action='modify' lat='37.24067695782' lon='126.77404339958'>
+    <tag k='cngmeters' v='3.354448865525299' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-26' />
+    <tag k='x' v='302555.7148506873' />
+    <tag k='y' v='4123893.695547702' />
+  </node>
+  <node id='-35002' action='modify' lat='37.24154742978' lon='126.77442182749'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-27' />
+    <tag k='x' v='302591.5579402625' />
+    <tag k='y' v='4123989.4938130025' />
+  </node>
+  <node id='-35003' action='modify' lat='37.24154878989' lon='126.77454398368'>
+    <tag k='cngmeters' v='10.840753463283415' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-27' />
+    <tag k='x' v='302602.3981953742' />
+    <tag k='y' v='4123989.389867036' />
+  </node>
+  <node id='-35006' action='modify' lat='37.24168276007' lon='126.77425268815'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-29' />
+    <tag k='x' v='302576.906469053' />
+    <tag k='y' v='4124004.863024224' />
+  </node>
+  <node id='-35007' action='modify' lat='37.24165419792' lon='126.77425354239'>
+    <tag k='cngmeters' v='3.17104980104766' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-29' />
+    <tag k='x' v='302576.9077055952' />
+    <tag k='y' v='4124001.691974664' />
+  </node>
+  <node id='-35010' action='modify' lat='37.24206426775' lon='126.77449700053'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-31' />
+    <tag k='x' v='302599.5754366096' />
+    <tag k='y' v='4124046.685509145' />
+  </node>
+  <node id='-35011' action='modify' lat='37.24206562785' lon='126.77458925835'>
+    <tag k='cngmeters' v='8.187963877586213' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-31' />
+    <tag k='x' v='302607.7632949947' />
+    <tag k='y' v='4124046.643945623' />
+  </node>
+  <node id='-35012' action='modify' lat='37.24249473667' lon='126.77440047151'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-32' />
+    <tag k='x' v='302592.1356484464' />
+    <tag k='y' v='4124094.6519075697' />
+  </node>
+  <node id='-35013' action='modify' lat='37.24249813689' lon='126.77456363117'>
+    <tag k='cngmeters' v='14.482940132312468' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-32' />
+    <tag k='x' v='302606.6185416375' />
+    <tag k='y' v='4124094.68878156' />
+  </node>
+  <node id='-35018' action='modify' lat='37.24277219401' lon='126.77391355524'>
+    <tag k='cngmeters' v='0.0' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-35' />
+    <tag k='x' v='302549.6651905338' />
+    <tag k='y' v='4124126.4547343' />
+  </node>
+  <node id='-35019' action='modify' lat='37.24279735553' lon='126.77391184676'>
+    <tag k='cngmeters' v='2.796816968437404' />
+    <tag k='code' v='3' />
+    <tag k='fid' v='-35' />
+    <tag k='x' v='302549.5793116146' />
+    <tag k='y' v='4124129.250232461' />
+  </node>
+  <way id='-29249' action='modify'>
+    <nd ref='-34967' />
+    <nd ref='-34966' />
+    <tag k='code' v='3' />
+  </way>
+  <way id='-29252' action='modify'>
+    <nd ref='-34971' />
+    <nd ref='-34970' />
+    <tag k='code' v='3' />
+  </way>
+  <way id='-29258' action='modify'>
+    <nd ref='-34978' />
+    <nd ref='-34979' />
+    <tag k='code' v='3' />
+  </way>
+  <way id='-29260' action='modify'>
+    <nd ref='-34976' />
+    <nd ref='-34977' />
+    <tag k='code' v='3' />
+  </way>
+  <way id='-29261' action='modify'>
+    <nd ref='-34993' />
+    <nd ref='-34992' />
+    <tag k='code' v='3' />
+  </way>
+  <way id='-29263' action='modify'>
+    <nd ref='-34994' />
+    <nd ref='-34995' />
+    <tag k='code' v='3' />
+  </way>
+  <way id='-29266' action='modify'>
+    <nd ref='-35000' />
+    <nd ref='-35001' />
+    <tag k='code' v='3' />
+  </way>
+  <way id='-29267' action='modify'>
+    <nd ref='-35002' />
+    <nd ref='-35003' />
+    <tag k='code' v='3' />
+  </way>
+  <way id='-29269' action='modify'>
+    <nd ref='-35006' />
+    <nd ref='-35007' />
+    <tag k='code' v='3' />
+  </way>
+  <way id='-29271' action='modify'>
+    <nd ref='-35010' />
+    <nd ref='-35011' />
+    <tag k='code' v='3' />
+  </way>
+  <way id='-29272' action='modify'>
+    <nd ref='-35012' />
+    <nd ref='-35013' />
+    <tag k='code' v='3' />
+  </way>
+  <way id='-29278' action='modify'>
+    <nd ref='-35018' />
+    <nd ref='-35019' />
+    <tag k='code' v='3' />
+  </way>
+</osm>
