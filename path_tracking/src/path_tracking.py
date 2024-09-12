@@ -26,8 +26,8 @@ class PathTracking():
         self.obstacles = []
         self.gear = 0
 
-        self.desired_max_speed = { 'normal_driving' : 5.0, 'obstacle_avoiding':  4.0, 'intersect': 4.0, 'parking': 2.8, 'delivery_start': 1.8, 'delivery_finish': 1.8 }
-        self.desired_min_speed = { 'normal_driving' : 3.0, 'obstacle_avoiding':  2.5, 'intersect': 2.5, 'parking': 2.5, 'delivery_start': 1.0, 'delivery_finish': 1.0 }
+        self.desired_max_speed = { 'normal_driving' : 4.0, 'obstacle_avoiding':  3.5, 'intersect': 4.0, 'parking': 2.5, 'delivery_start': 1.8, 'delivery_finish': 1.8 }
+        self.desired_min_speed = { 'normal_driving' : 2.5, 'obstacle_avoiding':  2.0, 'intersect': 2.5, 'parking': 2.0, 'delivery_start': 1.0, 'delivery_finish': 1.0 }
 
         ### Stanley ###
         self.controller = Stanley(k=0.8, ks=0.5, kd=0, L=0.7,

@@ -41,6 +41,9 @@ class MapvizTF(object):
 
         self.obstalces_sub = rospy.Subscriber('/adaptive_clustering/markers', MarkerArray, self.callback_obstacles)
         self.obstalces_utm_pub = rospy.Publisher('/obstacles_utm', PoseArray, queue_size=10)
+
+        self.delivery_spot_sub = rospy.Subscriber('/deliverysign_spot', PoseArray, self.callback_spot)
+        self.delivery_spot_utm_sub = rospy.Publisher('/delivery_utm', PoseArray, queue_size=10)
         return
     
     def callback_global_location(self, global_location_msg):
@@ -101,6 +104,31 @@ class MapvizTF(object):
                 utm_pose_array.poses.append(pose_transformed.pose)
             
             self.obstalces_utm_pub.publish(utm_pose_array)
+        
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            print("world <-> base_link 또는 base_link <-> velodyne 좌표 변환 발행 X")
+
+        return
+    
+    def callback_spot(self, spot_pose_array_msg):
+        target_frame = 'world'
+        try:
+            # mapviz 프레임으로의 변환 탐색
+            self.transformer = self.tf_bf_vldyn2w.lookup_transform(target_frame, 'velodyne', rospy.Time(0),rospy.Duration(1.0))
+
+            utm_pose_array = PoseArray()
+            utm_pose_array.header.frame_id = 'utm'
+            utm_pose_array.header.stamp = rospy.Time.now()
+            
+            for spot_pose in spot_pose_array_msg.poses:
+                pose = PoseStamped()
+                pose.header = 'velodyne'
+                pose.pose = spot_pose
+                pose_transformed = tf2_geometry_msgs.do_transform_pose(pose, self.transformer)
+
+                utm_pose_array.poses.append(pose_transformed.pose)
+            
+            self.delivery_spot_utm_sub.publish(utm_pose_array)
         
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             print("world <-> base_link 또는 base_link <-> velodyne 좌표 변환 발행 X")

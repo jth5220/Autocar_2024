@@ -142,6 +142,7 @@ class OptimalFrenetPlanning():
         # 정상주행 => 배달미션(A)로 넘어갈 때
         if (self.driving_mode == 'normal_driving' or self.driving_mode == 'curve')  and mode_msg.data == 'delivery_start':
             if self.delivery_pose is None:
+                print("아직 배달 표지판 못찾음,", self.delivery_pose)
                 self.path_finder = Frenet(self.ref_path, self.car_pose,
                                 robot_radius = ROBOT_RADIUS,
                                 lane_width = LANE_WIDTH,
@@ -169,6 +170,7 @@ class OptimalFrenetPlanning():
         # 정상주행 => 배달미션(B)로 넘어갈 때
         if (self.driving_mode == 'normal_driving' or self.driving_mode == 'curve') and mode_msg.data == 'delivery_finish':
             if self.delivery_pose is None:
+                print("아직 배달 표지판 못찾음,", self.delivery_pose)
                 self.path_finder = Frenet(self.ref_path, self.car_pose,
                                 robot_radius = ROBOT_RADIUS,
                                 lane_width = LANE_WIDTH,
