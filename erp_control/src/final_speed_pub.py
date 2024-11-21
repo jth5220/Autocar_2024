@@ -101,7 +101,7 @@ class DataPlot():
     
 class TargetSpeedUpdate():
     def __init__(self):        
-        self.target_speed = 2.0
+        self.target_speed = 1.0
         self.alpha = 0.2
         self.target_speed_prev = 0.0
         

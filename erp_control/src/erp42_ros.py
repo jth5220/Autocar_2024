@@ -29,7 +29,7 @@ class ERP42():
         self.cmd_sub = rospy.Subscriber("/erp_command", AckermannDrive, self.callback_cmd)
 
         # 통신 포트 확인
-        self.ser = serial.serial_for_url("/dev/ttyUSB0", baudrate=115200, timeout=1)
+        self.ser = serial.serial_for_url("/dev/ttyERP", baudrate=115200, timeout=1)
         
         self.gear = 0 # 0: 전진, 2: 후진
         self.target_speed = 0
@@ -45,7 +45,15 @@ class ERP42():
         return
     
     def timer_callback_erp42(self, event):
-        self.send_to_ERP42(self.gear, self.target_speed, self.target_steer, self.target_brake)
+        # 목표 속도가 음수 => 기어 2
+        if self.target_speed < 0:
+            self.gear = 2
+            target_speed = -self.target_speed
+        else: # 양수 or 0 => 기어 0
+            self.gear = 0
+            target_speed = self.target_speed
+
+        self.send_to_ERP42(self.gear, target_speed, self.target_steer, self.target_brake)
         return
     
     def send_to_ERP42(self, gear, speed, steer, brake):
@@ -64,12 +72,13 @@ class ERP42():
         vals = [S, T, X, AorM, ESTOP,GEAR, SPEED0, SPEED1, STEER0, STEER1, BRAKE, ALIVE, ETX0, ETX1]
         for i in range(len(vals)):
             self.ser.write(vals[i].to_bytes(1, byteorder='big')) # send!
+
         print(vals)
-        # print("gear: ", gear)
-        # print("speed: ", speed)
-        # print("brake: ", brake)
-        # print("steer: ", steer)
-        # print("==============================")
+        print("gear: ", gear)
+        print("speed: ", speed)
+        print("brake: ", brake)
+        print("steer: ", steer)
+        print("==============================")
         return
     
     def GetGEAR(self, gear):
