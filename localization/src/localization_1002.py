@@ -4,39 +4,27 @@
 import pyproj
 import numpy as np
 import time
-import copy
 from scipy.spatial import KDTree
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 from collections import deque
 
+import sys
+import pathlib
+sys.path.append(str(pathlib.Path(__file__).parent.parent.parent))
+
 import rospy
+import message_filters
 from sensor_msgs.msg import NavSatFix, Imu
-from geometry_msgs.msg import PoseWithCovarianceStamped, QuaternionStamped, PoseArray,TwistWithCovarianceStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped, QuaternionStamped, PoseArray
 from visualization_msgs.msg import MarkerArray
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Float32, Int16, Int32, Float32MultiArray, String, Bool
-from ackermann_msgs.msg import AckermannDrive
-# from carla_msgs.msg import CarlaEgoVehicleControl
+from std_msgs.msg import Float32, Int16, Int32, Float32MultiArray, String
 
-SPEED = 2.5
-
-class LowPassFilter():
-    def __init__(self, alpha=0.3):
-        self.v_prev = 0.0
-        self.alpha = alpha
-        return
-    
-    def update(self, v):
-        self.v_prev = v * self.alpha + self.v_prev * (1-self.alpha)
-        return self.v_prev
-
+CORRECT_RATE = 1 # second
 
 class Localization():
     def __init__(self):
-        self.way_time = None
-        self.way_signal = False
-
         self.gps_pose = Odometry()
         self.gps_pose.header.frame_id = 'utm'
 
@@ -48,9 +36,6 @@ class Localization():
         self.location_long_corrected = Odometry()
         self.location_long_corrected.header.frame_id = 'utm'
         
-        self.location_dr = Odometry()
-        self.location_dr.header.frame_id = 'utm'
-        
         self.location = Odometry()
         self.location.header.frame_id = 'utm'
         
@@ -61,6 +46,7 @@ class Localization():
         self.local_cte = None
         self.lateral_offset = (0,0) # meters
         self.lateral_error = 0
+        self.prev_time = None
         
         #종방향 관련 초기값
         self.stopline_dict = {}
@@ -70,63 +56,23 @@ class Localization():
         self.is_longitudinal_error_calculated = True
         self.closest_stopline_prev = 0
         
-        # 방향정보 관련 초기값
-        self.location_history = deque(maxlen=5)
-        self.gps_mean_yaw = None
-        
         # waypoint 초기값
         self.closest_waypoints = []
         self.global_waypoints = []
+        self.closest_wp_idx = None
    
         self.driving_mode = None
+
         
-        #DeadReckoning 초기값
-        self.init_pose_set = False
-        self.dt = 0.1
-        theta = np.radians(-1.4440643432812905)
-        self.RM_offset = np.array([
-                                   [np.cos(theta), np.sin(-theta), 0, 0],
-                                   [np.sin(theta), np.cos(theta) , 0, 0],
-                                   [0,             0,              1, 0],
-                                   [0,             0,              0, 1]
-                                ])
-        
-        self.init_pose = np.zeros((4, 1))
-        self.car_pose_dr = np.zeros((4, 1))
-        self.car_pose_dr_offset = np.zeros((4, 1))
-        self.steer = 0.0
-        self.lpf = LowPassFilter(alpha=0.3)
-        self.speed = 0.0
-        self.yaw_gps_offset =0
-        # DeadReckoning 파라미터 
-        wheelbase = 1.566 # [m] # 휠베이스 조정
-        self.l_r = wheelbase * 0.0 # [m]  #rear
-        self.l_f = wheelbase * 1.0 # [m]  #front 무게중심 비율 조정
-        
-        self.is_go = True
         # ROS
         rospy.init_node('localization')
         
-        # way change signal sub
-        self.way_change_signal_sub = rospy.Subscriber('/way_change_signal', Bool, self.callback_way_change_signal)
-
         # gps, imu sub
         self.gps_sub = rospy.Subscriber('/ublox_gps/fix', NavSatFix, self.callback_gps)
         self.imu_sub = rospy.Subscriber('/imu/data', Imu, self.callback_imu)
-        
-        # 엔코더, gps 속도
-        self.speed_sub = rospy.Subscriber("/cur_speed", Float32, self.callback_speed)
-        # self.speed_sub = rospy.Subscriber("/ublox_gps/fix_velocity", TwistWithCovarianceStamped, self.callback_speed)
-        
-        #erp cmd
-        self.cmd_sub = rospy.Subscriber('/erp_command', AckermannDrive, self.callback_cmd)
-
-        # CARLA
         # self.gps_sub = rospy.Subscriber('/carla/ego_vehicle/gnss', NavSatFix, self.callback_gps)
         # self.imu_sub = rospy.Subscriber('/carla/ego_vehicle/imu', Imu, self.callback_imu)
-        # self.speed_sub = rospy.Subscriber('/carla/ego_vehicle/speedometer',Float32,self.callback_speed)
-        # self.cmd_sub = self.cmd_sub = rospy.Subscriber('/carla/ego_vehicle/vehicle_control_cmd', CarlaEgoVehicleControl, self.callback_cmd)
-
+        
         # 현재 주행 모드 가져오기
         self.driving_mode_sub = rospy.Subscriber('/driving_mode', String, self.callback_driving_mode)
         
@@ -136,6 +82,7 @@ class Localization():
         # global path planning waypoint 정보
         self.closest_waypoints_sub = rospy.Subscriber('/global_closest_waypoints', PoseArray, self.callback_closest_waypoints)
         self.waypoints_sub = rospy.Subscriber('/global_waypoints', PoseArray, self.callback_global_waypoints)
+        self.closest_wp_sub = rospy.Subscriber('/closest_wp_idx', Int32, self.callback_closest_wp_idx)
         
         # 정지선 위치
         self.stoplines_sub = rospy.Subscriber('/stoplines', MarkerArray, self.callback_stopline)
@@ -143,13 +90,18 @@ class Localization():
         #global local 횡방향 종방향 에러 sub
         self.local_cte_sub = rospy.Subscriber('/ct_error_local', Float32, self.callback_cte)
         self.local_ate_sub = rospy.Subscriber('/at_error_local', Float32, self.callback_ate)
+
+        
+        # dead reckoning 위치 sub
+        self.pose_dr_sub = rospy.Subscriber('/pose_dr', Odometry, self.callback_dr)
         
         # 보정안된 위치와 보정된 위치 pub
         self.location_no_correction_pub = rospy.Publisher('/location_not_corrected', Odometry, queue_size=10)
         # self.location_long_corrected_pub = rospy.Publisher('/location_long_corrected', Odometry,queue_size=10)
-        # self.location_corrected_pub = rospy.Publisher('/location_corrected', Odometry, queue_size=10)
-        # self.location_dr_pub = rospy.Publisher('/location_dr', Odometry, queue_size=10)
+        self.location_corrected_pub = rospy.Publisher('/location_corrected', Odometry, queue_size=10)
+
         self.location_pub = rospy.Publisher('/location',Odometry, queue_size=10)
+        
         
         # 최종 보정된 종방향 횡방향 에러 pub
         self.lateral_error_pub = rospy.Publisher('/lateral_error', Float32, queue_size=10)
@@ -160,14 +112,24 @@ class Localization():
     
     
     def callback_timer_location_pub(self, event):
-     
         location_gps = (self.gps_pose.pose.pose.position.x, self.gps_pose.pose.pose.position.y)
-        
-        if self.global_waypoints and self.driving_mode == 'normal_driving':
-            global_cte = get_cte(location_gps,self.global_waypoints)
-        else:
-            pass
 
+        if self.global_waypoints:
+            global_cte = get_cte(location_gps,self.global_waypoints,self.closest_wp_idx)
+        
+        if self.driving_mode == "normal_driving" :
+            #횡방향 위치 보정
+            # global_cte = get_cte(location,self.global_waypoints,self.closest_wp_idx)
+            local_cte = self.local_cte
+            if local_cte is not None:
+                lateral_error = local_cte - global_cte
+                self.lateral_error = lateral_error
+                        
+                perpendicular_direction = self.global_yaw + np.pi/2
+                self.lateral_offset = (self.lateral_error * np.cos(perpendicular_direction), self.lateral_error * np.sin(perpendicular_direction))
+        
+            #종방향 위치 보정
+        
         if self.closest_waypoints:
             global_ate, closest_stopline = get_ate(location_gps,self.stopline_dict,self.closest_waypoints)
             
@@ -176,90 +138,36 @@ class Localization():
             self.closest_stopline_prev = closest_stopline
             
             if 3.1 < self.local_ate < 7.5 and 0 < global_ate < 25 and self.is_longitudinal_error_calculated:  #base_link에서 차 위치가 (2,0) 으로 시작하기 때문에
-                self.longitudinal_error = self.local_ate - global_ate
+                longitudinal_error = self.local_ate - global_ate
             
                 parallel_direction = self.global_yaw
                 perpendicular_direction = self.global_yaw + np.pi/2
                 #print(parallel_direction)
-                self.longitudinal_offset = (self.longitudinal_error * np.cos(parallel_direction)+self.lateral_error*np.cos(perpendicular_direction),
-                                            self.longitudinal_error * np.sin(parallel_direction)+self.lateral_error*np.sin(perpendicular_direction))
+                self.longitudinal_offset = (longitudinal_error * np.cos(parallel_direction)+self.lateral_error*np.cos(perpendicular_direction),
+                                            longitudinal_error * np.sin(parallel_direction)+self.lateral_error*np.sin(perpendicular_direction))
                 
                 self.is_longitudinal_error_calculated = False
  
             # print(closest_stopline,self.closest_stopline_prev,self.is_longitudinal_error_calculated)
-        
-        if self.driving_mode == "normal_driving":
-            if  (self.way_time is not None) and (self.way_signal == True) and (1.5 < time.time() - self.way_time < 4):
-                #횡방향 위치 보정
-                local_cte = self.local_cte
-                if local_cte is not None:
-                    lateral_error = local_cte - global_cte
-                    self.lateral_error = lateral_error
-                            
-                    perpendicular_direction = self.global_yaw + np.pi/2
-                    self.lateral_offset = (self.lateral_error * np.cos(perpendicular_direction), self.lateral_error * np.sin(perpendicular_direction))
-                    print("보정됨")
-                    self.way_signal = False
-
-            #종방향 위치 보정
-        
-        if self.location is None:
-            self.location = copy.deepcopy(self.gps_pose)
-
-        self.location_history.append((self.gps_pose.pose.pose.position.x, self.gps_pose.pose.pose.position.y))
-        location_xs = np.array([point[0] for point in self.location_history])
-        location_ys = np.array([point[1] for point in self.location_history])
             
-        if len(self.location_history) == 5:
-            dxs = np.diff(location_xs)
-            dys = np.diff(location_ys)
-            slopes_np = np.arctan2(dys , dxs)
-            
-            self.gps_mean_yaw = np.mean(slopes_np)
-            
+        # self.location_long_corrected.pose.pose.position.x = self.gps_pose.pose.pose.position.x - self.longitudinal_offset[0]
+        # self.location_long_corrected.pose.pose.position.y = self.gps_pose.pose.pose.position.y - self.longitudinal_offset[1]
+        # self.location_long_corrected.pose.pose.orientation = self.gps_pose.pose.pose.orientation
 
-        if self.speed > SPEED and self.is_go == True:
-            self.yaw_gps_offset = normalize_angle(self.global_yaw - self.gps_mean_yaw)
-            self.location_history.clear()
-            self.is_go = False
-
-            # print("IMU 보정함")
+        self.location_corrected.pose.pose.position.x = self.gps_pose.pose.pose.position.x - self.lateral_offset[0] - self.longitudinal_offset[0]
+        self.location_corrected.pose.pose.position.y = self.gps_pose.pose.pose.position.y - self.lateral_offset[1] - self.longitudinal_offset[1]
+        self.location_corrected.pose.pose.orientation = self.gps_pose.pose.pose.orientation
         
-        elif self.speed > SPEED and np.abs(self.gps_mean_yaw - self.yaw_corr) > np.pi/6:
-            self.is_go = True
+        if self.driving_mode == 'intersect' and self.driving_mode == 'turnel':
+            self.location.pose.pose.position = self.dr_pos
+            self.location.pose.pose.orientation = self.dr_orientation
         else:
-            pass
-
-        self.yaw_corr = self.global_yaw - self.yaw_gps_offset
-        self.gps_pose.pose.pose.orientation.x, self.gps_pose.pose.pose.orientation.y, \
-        self.gps_pose.pose.pose.orientation.z, self.gps_pose.pose.pose.orientation.w = quaternion_from_euler(0, 0, self.global_yaw)
-        # if self.speed > 2.5:
-        #     self.is_go = True  
-        #     self.gps_pose.pose.pose.orientation.x, self.gps_pose.pose.pose.orientation.y, \
-        #     self.gps_pose.pose.pose.orientation.z, self.gps_pose.pose.pose.orientation.w = quaternion_from_euler(0, 0, self.gps_mean_yaw)
-        #     print("gps방향")
-        # else :
-        #     self.is_go = False
-        #     self.gps_pose.pose.pose.orientation.x, self.gps_pose.pose.pose.orientation.y, \
-        #     self.gps_pose.pose.pose.orientation.z, self.gps_pose.pose.pose.orientation.w = quaternion_from_euler(0, 0, self.global_yaw-self.yaw_gps_offset)
-        #     print("imu방향")
-
-        # if self.is_go and (self.gps_mean_yaw is not None) and (np.abs(self.gps_mean_yaw - self.global_yaw) < np.pi/2):
-        #     self.yaw_gps_offset = normalize_angle(self.global_yaw - self.gps_mean_yaw) 
+            self.location.pose.pose.position = self.location_corrected.pose.pose.position
+            self.location.pose.pose.orientation = self.location_corrected.pose.pose.orientation
         
-
-        self.location.pose.pose.position.x = self.gps_pose.pose.pose.position.x - self.lateral_offset[0] - self.longitudinal_offset[0]
-        self.location.pose.pose.position.y = self.gps_pose.pose.pose.position.y - self.lateral_offset[1] - self.longitudinal_offset[1]
-        self.location.pose.pose.orientation = self.gps_pose.pose.pose.orientation
-        # self.location.pose.pose.orientation.x, self.location.pose.pose.orientation.y, \
-        # self.location.pose.pose.orientation.z, self.location.pose.pose.orientation.w = quaternion_from_euler(0, 0, self.gps_mean_yaw)        
-        
-        
-        # Publish
         self.location_no_correction_pub.publish(self.gps_pose)
         # self.location_long_corrected_pub.publish(self.location_long_corrected)
-        # self.location_corrected_pub.publish(self.location_corrected)
-        # self.location_dr_pub.publish(self.location_dr)
+        self.location_corrected_pub.publish(self.location_corrected)
         self.location_pub.publish(self.location) 
         
         lateral_error_msg = Float32()
@@ -270,69 +178,29 @@ class Localization():
         longitudinal_error_msg.data = self.longitudinal_error
         self.longitudinal_error_pub.publish(longitudinal_error_msg)
         
-    
-    def motion_model(self, x, u):
-        # x = [x,y,yaw,v].T
-        # u = [yaw+beta, v]
-        F = np.array([[1.0, 0, 0, 0],
-                        [0, 1.0, 0, 0],
-                        [0, 0, 1.0, 0],
-                        [0, 0, 0, 0.0]])
 
-        B = np.array([[0.0, self.dt * np.cos(u[0,0])],
-                        [0.0, self.dt * np.sin(u[0,0])],
-                        [0.0, 0.0],
-                        [0.0, 1.0]])
-
-        x = F @ x + B @ u
-        return x
         
     def callback_driving_mode(self, mode_msg):
         self.driving_mode = mode_msg.data
 
-        # if self.driving_mode != 'intersect': # and self.driving_mode != 'obstacle_avoiding' :
-        #     self.init_pose_set = False
-            
-    
-    def callback_way_change_signal(self, signal_msg):
-        # way바뀌면 callback 작동
-        if self.way_signal == False:
-            self.way_time = time.time()
-            self.way_signal = True
-
-        return
-    
+    def callback_dr(self, dr_msg):
+        self.dr_pos = dr_msg.pose.pose.position
+        self.dr_orientation = dr_msg.pose.pose.orientation
+        
     def callback_gps(self, gps_msg):
         self.gps_pose.pose.pose.position.x, self.gps_pose.pose.pose.position.y = latlon_to_utm(gps_msg.latitude, gps_msg.longitude)
-        
+ 
         
     def callback_imu(self,imu_msg):
         local_yaw = euler_from_quaternion([imu_msg.orientation.x, imu_msg.orientation.y,\
                                           imu_msg.orientation.z, imu_msg.orientation.w])[2]
         global_yaw = local_yaw + self.yaw_offset
+        
         self.global_yaw = normalize_angle(global_yaw)
-        self.car_pose_dr[2, 0] = self.global_yaw
-        
-    def callback_cmd(self, cmd_msg):
-        steer = -np.radians(cmd_msg.steering_angle)
-        #erp
-        if steer > 20:
-            steer = 20
-        elif steer < -20:
-            steer = -20
-        else:
-            steer = steer
+        self.gps_pose.pose.pose.orientation.x, self.gps_pose.pose.pose.orientation.y, \
+        self.gps_pose.pose.pose.orientation.z, self.gps_pose.pose.pose.orientation.w = quaternion_from_euler(0, 0, self.global_yaw)
 
-        self.steer = self.lpf.update(steer)
-        #CARLA
-        # self.steer = self.lpf.update(-cmd_msg.steer)
-    
-    def callback_speed(self, speed_msg):
-        # speed = np.sqrt(speed_msg.twist.twist.linear.x **2 + speed_msg.twist.twist.linear.y**2)
-        self.speed = speed_msg.data
-        self.car_pose_dr[3, 0] = self.speed
-        
-        
+
     def callback_init_orientation(self, init_pose_msg):
         global_yaw = euler_from_quaternion([init_pose_msg.pose.pose.orientation.x, init_pose_msg.pose.pose.orientation.y, \
                                            init_pose_msg.pose.pose.orientation.z, init_pose_msg.pose.pose.orientation.w])[2]
@@ -358,6 +226,8 @@ class Localization():
             global_waypoint.append((x, y))
         self.global_waypoints = global_waypoint
         
+    def callback_closest_wp_idx(self, idx_msg):
+        self.closest_wp_idx = idx_msg.data
         
     def callback_cte(self, local_cte_msg):
         self.local_cte = local_cte_msg.data
@@ -394,15 +264,14 @@ def normalize_angle(angle):
         
     return angle
 
-def get_cte(car_position, waypoints):
-        waypoints_kdtree = KDTree(waypoints)
-        _, closest_node_idx = waypoints_kdtree.query(car_position)
+def get_cte(car_position, waypoints, closest_wp_idx):
+        
         try:
-            first_node = waypoints[closest_node_idx]
-            second_node = waypoints[closest_node_idx + 1]
+            first_node = waypoints[closest_wp_idx]
+            second_node = waypoints[closest_wp_idx + 1]
         except IndexError:
-            first_node = waypoints[closest_node_idx - 1]
-            second_node = waypoints[closest_node_idx]
+            first_node = waypoints[closest_wp_idx - 1]
+            second_node = waypoints[closest_wp_idx]
             print('err')
         linear_vector = [(second_node[0] - first_node[0]) , (second_node[1] - first_node[1])]
         slope = linear_vector[1]/linear_vector[0]

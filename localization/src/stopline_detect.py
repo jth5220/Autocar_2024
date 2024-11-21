@@ -30,7 +30,9 @@ class StopLineDetect():
         """ ROS """
         rospy.init_node('stopline_detect')
         
-        self.img_raw_sub = rospy.Subscriber('/image_raw', Image, self.callback_img_raw)
+        self.img_raw_sub = rospy.Subscriber('/image_lane', Image, self.callback_img_raw)
+        # self.img_raw_sub = rospy.Subscriber('/carla/ego_vehicle/rgb_front/image', Image, self.callback_img_raw)
+
         
         self.img_stop_line_pub = rospy.Publisher('/stopline_img', Image, queue_size=3)
         self.ate_pub = rospy.Publisher('/at_error_local', Float32, queue_size=10)
@@ -106,7 +108,7 @@ class StopLineDetect():
 
         return map_x, map_y
 
-    def detect_stop_line_using_contours(self, binary_img, original_img, min_width_ratio=0.1, max_width_ratio=1, min_area=300):
+    def detect_stop_line_using_contours(self, binary_img, original_img, min_width_ratio=0.1, max_width_ratio=1, min_area=150):
         contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         img_width = binary_img.shape[1]
         valid_contours = []
@@ -121,12 +123,14 @@ class StopLineDetect():
             x, y, width, height = cv2.boundingRect(contour)
             
             aspect_ratio = float(width) / height
-            if min_width_ratio * img_width < width < max_width_ratio * img_width and aspect_ratio > 1.5:
+            print(x, y, width, height)
+            if min_width_ratio * img_width < width < max_width_ratio * img_width :#and aspect_ratio > 0.4:
                 valid_contours.append(contour)
                 center_x = x + width / 2
                 center_y = y + height / 2
                 center_points.append((center_x, center_y))
                 
+                cv2.rectangle(original_img, (x, y), (x + width, y + height), (255, 0, 0), 2)
                 cv2.drawContours(original_img, valid_contours, -1, (0, 255, 0), 2)
             
         return original_img, center_points
@@ -140,33 +144,38 @@ class StopLineDetect():
         clahe_img = self.clahe(bev_img)
         white_img = self.select_white(clahe_img)
         gray_img = cv2.cvtColor(white_img,cv2.COLOR_BGR2GRAY)
-        ret, binary_img = cv2.threshold(gray_img, 200, 255, cv2.THRESH_BINARY)
-        #binary_img = binary_img[100:,:]
-        #bev_img = bev_img[100:,:]
         
-        # contour_img, center_points = self.detect_stop_line_using_contours(binary_img,bev_img)
-        # #print(center_points)
+        # kernel_size = (1, 1)
+        # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)
+        # closing = cv2.morphologyEx(gray_img, cv2.MORPH_CLOSE, kernel)
         
-        # if center_points:  # center_points가 비어 있지 않으면 실행
-        #     pixel_coordinates = np.mean(np.array(center_points), axis=0)  # 중심점들의 평균 위치 계산
+        ret, binary_img = cv2.threshold(gray_img, 220, 255, cv2.THRESH_BINARY)
+        binary_img = binary_img[100:,:]
+        bev_img = bev_img[100:,:]
+       
+        contour_img, center_points = self.detect_stop_line_using_contours(binary_img,bev_img)
+        #print(center_points)
+        
+        if center_points:  # center_points가 비어 있지 않으면 실행
+            pixel_coordinates = np.mean(np.array(center_points), axis=0)  # 중심점들의 평균 위치 계산
 
-        #     y_scale = 0.025
+            y_scale = 0.025
             
-        #     # pixel_coordinates[1] 대신 pixel_coordinates의 두 번째 값 사용
-        #     lane_world_x = y_scale * (bev_img.shape[0] - pixel_coordinates[1])
+            # pixel_coordinates[1] 대신 pixel_coordinates의 두 번째 값 사용
+            lane_world_x = y_scale * (bev_img.shape[0] - pixel_coordinates[1])
             
-        #     lane_world_x += 4.0
+            lane_world_x += 4.0
             
-        #     #print("y좌표 변환: ", lane_world_x)
+            #print("y좌표 변환: ", lane_world_x)
             
-        #     at_error = lane_world_x
+            at_error = lane_world_x
             
-        #     ate_msg = Float32()
-        #     ate_msg.data = at_error
-        #     self.ate_pub.publish(ate_msg)
-        # else:
-        #     pass
-            #print("정지선이 검출되지 않았습니다.")
+            ate_msg = Float32()
+            ate_msg.data = at_error
+            self.ate_pub.publish(ate_msg)
+        else:
+            pass
+            print("정지선이 검출되지 않았습니다.")
         # kernel_size = (3, 3)
         # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)
         # closing = cv2.morphologyEx(gray_img, cv2.MORPH_CLOSE, kernel)
@@ -258,7 +267,12 @@ class StopLineDetect():
         hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
         h,w = image.shape[0],image.shape[1]
         
-        white_lower = np.array([20, 170, 0]) 
+        # 원래
+        # white_lower = np.array([20, 170, 0]) 
+        # white_upper = np.array([179, 255, 255])
+        
+        #칼라에서 값
+        white_lower = np.array([20, 200, 0]) 
         white_upper = np.array([179, 255, 255])
 
         white_mask = cv2.inRange(hls, white_lower, white_upper)
