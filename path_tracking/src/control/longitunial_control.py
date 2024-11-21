@@ -3,27 +3,51 @@
 import numpy as np
 
 class RiseTimeImprovement():
-    def __init__(self, kp=4.0, ki=0.0, kd=0.0):
+    def __init__(self, kp=4.0, ki=0.0, kd=0.0, brake_gain=20):
         # PID controller
         self.pid = PID(kp, ki, kd)
+        self.brake_gain = brake_gain
         return
     
-    def update(self, target_speed, speed):
-        output, PID_term = self.pid.update(setpoint=target_speed, measurement=speed)
-        final_speed = target_speed + output
-        final_break = 1 
-        
-        if final_speed > 5.0:
-            final_speed = 5.0
-        
-        elif abs(speed - target_speed) <= 0.3: 
-            final_speed = target_speed
-            final_break = 1
-            
-        elif speed >= target_speed: # elif final_speed <= 0:
-            final_speed = 0
-            final_break = abs(PID_term[0] * 20)
+    def update(self, target_speed, measurement_speed):
+        output, PID_term = self.pid.update(setpoint=target_speed, measurement=measurement_speed)
+        final_speed = max(min(target_speed + output, 5.0), 0.0)
 
+        # final_speed = target_speed
+        final_break = 1
+
+        # elif (measurement_speed - target_speed) < -1.0:
+        #     final_speed += 0.5
+
+        if (measurement_speed - target_speed) <= 0.05 and\
+                (measurement_speed - target_speed) >= -0.2: 
+            final_speed = target_speed
+            
+        elif measurement_speed - target_speed > 0 : # 측정 속도 > 목표 속도 / 오버슛 났을 때
+            # if measurement_speed >= 2.0:
+            #     final_speed = 1. # m/s
+            # elif measurement_speed < 2.0:
+            #     final_speed = target_speed # ERP 입력 속도가 0이면 ERP 내부에서 급감속시킨다고함
+            final_speed = 0
+           
+           # 0705 이전 
+            # if measurement_speed > 3.0:
+            #     brake_gain = self.brake_gain * 1.5
+            # elif measurement_speed > 2.5:
+            #     brake_gain = self.brake_gain * 1.3
+            # elif measurement_speed > 2.0:
+            #     brake_gain = self.brake_gain * 1.15
+            # elif measurement_speed < 1.5:
+            #     brake_gain = self.brake_gain * 1.0
+            # else:
+            brake_gain = self.brake_gain
+            print("차이있음,pid텀:",PID_term[0])
+            # brake_gain = self.brake_gain
+            final_break = abs(PID_term[0] * brake_gain)
+
+            # # 2023년도 버전
+            # final_speed = target_speed					
+            # final_break = 40 + int( ( measurement_speed - target_speed )*35 ) 
         return final_speed, final_break
     
 
