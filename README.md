@@ -1,4 +1,4 @@
-#단축키
+# 단축키
 alias camlane='cd ~/catkin_ws/src/sensor && python3 camera_ros_lane.py'
 alias camdelivery='cd ~/catkin_ws/src/sensor && python3 camera_ros_delivery.py'
 alias camtraffic='cd ~/catkin_ws/src/sensor && python3 camera_ros_traffic.py'
@@ -23,7 +23,5 @@ alias delivery='cd ~/catkin_ws/src/perception/yolo_detection/src && python3 deli
 alias ssf='cd ~/catkin_ws/src/perception/sensor_fusion/src && python3 sensor_fusion.py'
 alias traffic='cd ~/catkin_ws/src/perception/yolo_detection/src && python3 trafficlight.py'
 
-
-# Path Tracking & Control 실행
 alias ptr='cd ~/catkin_ws/src/path_tracking/src && python3 path_tracking.py'
 alias erp='rosrun erp_control erp42_ros.py'
