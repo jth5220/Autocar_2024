@@ -51,65 +51,36 @@ class Frenet(object):
         # 3,6 / 4,12
         self.MIN_SF = 4.0
         self.DS = 6.0 # 종방향으로 얼마나 쪼갤지
-        self.steps = 20
+        self.steps = 40
 
-        # cost weights 1001
+        # cost weights
         self.K = 3 # 원래 ref path로 돌아오려는 weight
         self.K_DIFF = 3
-        self.K_KAPPA = 0
-        self.K_MEAN_S = 0
+        self.K_KAPPA = 5
+        self.K_MEAN_S = 3
         self.K_SHORT = 0
         self.K_COLLISION = 0.0
 
         if possible_change_direction == 'right':
             self.DF_SET = np.array([-self.LANE_WIDTH, 0.0])
-            self.DDF_SET = [0.0]
-            self.max_ob_radius = 2.0
-            self.min_ob_radius = 1.0
+            self.ob_radius = 0.5
             self.MAX_SF = 20.0
-            self.MIN_SF = 4.0
-            self.DS = 6.0
-
         elif possible_change_direction == 'left':
-            # self.DF_SET = np.array([-0.3 * self.LANE_WIDTH, 0.0, self.LANE_WIDTH])
-            self.DF_SET = np.array([-0.05 * self.LANE_WIDTH, 0.0, self.LANE_WIDTH * 0.6, self.LANE_WIDTH*1.0])
-            self.DDF_SET = [0.0]
-            self.max_ob_radius = 2.0
-            self.min_ob_radius = 0.5
-
-            self.MAX_SF = 12.0
-            self.MIN_SF = 6.0
-            self.DS = 3.0
-
-            # self.MAX_SF = 20.0
-            # self.MIN_SF = 4.0
-            # self.DS = 6.0
-
+            self.DF_SET = np.array([-0.3 * self.LANE_WIDTH, 0.0, self.LANE_WIDTH])
+            self.ob_radius = 0.5
+            self.MAX_SF = 20.0
         elif possible_change_direction == 'both':
             self.DF_SET = np.array([-self.LANE_WIDTH, 0.0, self.LANE_WIDTH])
-            self.DDF_SET = [0.0]
-            self.max_ob_radius = 2.0
-            self.min_ob_radius = 1.0
+            self.ob_radius = 0.5
             self.MAX_SF = 20.0
-            self.MIN_SF = 4.0
-            self.DS = 6.0
-
         else: # 같은 차선 내
-            self.DF_SET = np.array([-self.LANE_WIDTH * 0.20, -self.LANE_WIDTH * 0.15, 0.0, 
-                                   self.LANE_WIDTH * 0.1, self.LANE_WIDTH * 0.2, self.LANE_WIDTH * 0.3])
-                                    #   self.LANE_WIDTH * 0.2, self.LANE_WIDTH * 0.3, self.LANE_WIDTH * 0.35])
-            self.DDF_SET = [-0.3, 0.0, 0.3]
-            self.max_ob_radius = 0.5
-            self.min_ob_radius = 0.32
-            self.MAX_SF = 4.0 # 길이
-            self.MIN_SF = 2.0 # 곡률
-            self.DS = 2.0
+            # self.DF_SET = np.array([-self.LANE_WIDTH * 0.3, -self.LANE_WIDTH * 0.4, 0.0, 
+            #                         self.LANE_WIDTH*0.3, self.LANE_WIDTH * 0.6])
+            self.DF_SET = np.array([-self.LANE_WIDTH * 0.4, 0.0, 
+                                    self.LANE_WIDTH * 0.3, self.LANE_WIDTH * 0.6])
             
-            # self.DF_SET = np.array([-self.LANE_WIDTH * 0.1, 0.0, 
-            #                        self.LANE_WIDTH * 0.2,  self.LANE_WIDTH * 0.35])
-            # self.MAX_SF = 4.0 # 길이
-            # self.MIN_SF = 1.0 # 곡률
-            # self.DS = 3.0
+            self.ob_radius = 0.3
+            self.MAX_SF = 12.0
 
     def get_frenet(self, cur_position, ref_path):
         _, idx = self.find_closest_wp(cur_position, ref_path)
@@ -178,29 +149,23 @@ class Frenet(object):
                     + self.K_KAPPA * mean_kappa \
                     + self.K_MEAN_S * fp.kappa \
                     + self.K_COLLISION / (fp.gap + 0.01)
-            # print('cost:', fp.d[-1], ',', fp.gap, ',' ,fp.c)
+
             if min_cost > fp.c:
                 min_cost = fp.c
                 opt_path = fp
                     
         if opt_path is not None:
             self.prev_opt_path = opt_path
-            self.update_avoidance_status(opt_path, car_d)
-        # else:
-        #     opt_path = self.prev_opt_path
-        #     # opt path가 없으면 이전 opt path를 활용
-        #     # 이전 opt path의 s값을 offset 시켜서 쏴주면 더 좋을거같음
 
-        # elif len(opt_path.x) == 0:
         else:
-            if len(self.prev_opt_path.x) == 0:
-                normal_path = self.find_normal_path(car_pose)
-                return frenet_paths, [normal_path['x'], normal_path['y'], normal_path['yaw']], False, 0, False
-            else:
-                opt_path = self.prev_opt_path
+            opt_path = self.prev_opt_path
+            # opt path가 없으면 이전 opt path를 활용
+            # 이전 opt path의 s값을 offset 시켜서 쏴주면 더 좋을거같음
 
-        
-        # print("opt path: ", opt_path)
+        if len(opt_path.x) == 0:
+            opt_path = self.prev_opt_path
+        self.update_avoidance_status(opt_path, car_d)
+        print("opt path: ", opt_path)
         return frenet_paths, [opt_path.x, opt_path.y, opt_path.yaw], self.is_avoiding, 0, False
 
     def calc_frenet_paths(self, car_pose, ref_path):
@@ -210,29 +175,16 @@ class Frenet(object):
         ddi = self.prev_opt_path.dp(si)
         dddi = self.prev_opt_path.ddp(si)
 
-        # ddi = max(ddi,0)
-        # dddi = max(dddi,0)
-        print('di:', di,ddi ,dddi)
-        # ddi = -0.05
         #path final condition
         ddf = 0.0
         dddf = 0.0
 
-        # frenet_paths = []
-        # for df in self.DF_SET:
-        #     for sf in np.arange(si+self.MIN_SF, si+self.MAX_SF + self.DS, self.DS):
-        #         fp = FrenetPath(si, di, ddi, dddi, sf, df, ddf, dddf)
-        #         frenet_paths.append(fp)
-
         frenet_paths = []
         for df in self.DF_SET:
             for sf in np.arange(si+self.MIN_SF, si+self.MAX_SF + self.DS, self.DS):
-                for ddf in self.DDF_SET:  # 방향 전환을 위한 가속도 변화
-                    # for dddi in [0, -0.05]:
-                        fp = FrenetPath(si, di, ddi, dddi, sf, df, ddf, dddf)
-                        frenet_paths.append(fp)
+                fp = FrenetPath(si, di, ddi, dddi, sf, df, ddf, dddf)
+                frenet_paths.append(fp)
 
-        
         return frenet_paths, car_d
 
     def calc_global_paths(self, fplist, ref_path):
@@ -260,14 +212,12 @@ class Frenet(object):
         for ob_x, ob_y, ob_radius_ in obstacles:
             d = [((_x - ob_x) ** 2 + (_y - ob_y) ** 2) for (_x, _y) in zip(fp.x, fp.y)]
             
-            ob_radius = min(ob_radius_,self.max_ob_radius)
-            ob_radius = max(ob_radius,self.min_ob_radius)
-            # ob_radius = self.ob_radius
-            collision_dist = np.sqrt(min(d)) - self.robot_radius - ob_radius
-            # fp.gap = np.sqrt(min(d))
+            # ob_radius = max(self.ob_radius, ob_radius_)
+            ob_radius = self.ob_radius
+            fp.gap = np.sqrt(min(d)) - self.robot_radius - ob_radius
             
             # print(np.sqrt(min(d)), ob_radius)
-            collision = collision_dist <= 0
+            collision = fp.gap <= 0
 
             if collision:
                 return True
@@ -303,43 +253,14 @@ class Frenet(object):
 
         kappa = path.kappa
 
-        if kappa > 0.08:
+        if kappa > 0.25:
             self.is_avoiding = True
             # print('장애물 cost:', path.gap)
         
-        else:
+        if self.is_avoiding == True and abs(car_d) < 0.3 and kappa <= 0.5:
             self.is_avoiding = False
-        # if self.is_avoiding == True and abs(car_d) < 0.3 and kappa <= 0.5:
-        #     self.is_avoiding = False
 
         return 
-    
-    def find_normal_path(self, car_pose):
-        car_x, car_y = car_pose[0], car_pose[1]
-        
-        # _, cur_idx = self.path_kdtree.query([car_x, car_y])
-        cur_idx = None
-        min_dist = np.inf
-        for idx, (path_x_, path_y_) in enumerate(zip(self.ref_path['x'], self.ref_path['y'])):
-            dist = (path_x_ - car_x)**2 + (path_y_ - car_y)**2
-            if dist < min_dist:
-                cur_idx = idx
-                min_dist = dist
-        
-        # 가장 가까운 노드로부터 앞으로 10개, 뒤로 4개 찾기
-        n_back = 4
-        n_forward = 10
-        path_len = len(self.ref_path['x'])
-
-        start_index = max(cur_idx - n_back, 0)
-        end_index = min(cur_idx + n_forward, path_len)
-        
-        # 인근 waypoints 추출
-        path = {'x':[], 'y':[], 'yaw':[]}
-        path['x'] = self.ref_path['x'][start_index:end_index + 1]
-        path['y'] = self.ref_path['y'][start_index:end_index + 1]
-        path['yaw'] = self.ref_path['yaw'][start_index:end_index + 1]
-        return path
     
     # # Atsushi Sakai 코드 복붙
     # def calc_global_paths(self, fplist, ref_path):
@@ -388,4 +309,3 @@ class Frenet(object):
     #             fp.c.append((fp.yaw[i + 1] - fp.yaw[i]) / fp.ds[i])
 
     #     return fplist
-

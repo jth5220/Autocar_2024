@@ -48,7 +48,8 @@ class Parking():
         self.obstacle_detect_range2 = -1.0
         self.spot_adjustment_x = 1.15 # 조정위치(세로)
         self.spot_adjustment_y = 1.2 #(가로)
-        self.stop_point = 6
+        self.stop_point = 5
+
 
         # parking_status 
         # 0: staright
@@ -97,29 +98,22 @@ class Parking():
 
         elif self.detect_parking_spot:
             
-            if self.parking_status == 0: #전진
+            if self.parking_status == 0:
                 path_x, path_y = self.parking_path_straight_x, self.parking_path_straight_y
                 
-            elif self.parking_status == 1: #주차시작
+            elif self.parking_status == 1:
                 path_x, path_y = self.parking_path_circle_x, self.parking_path_circle_y
 
-            elif self.parking_status == 2: #주차위치조정
-                path_x, path_y = self.parking_path_adjust_x, self.parking_path_adjust_y
-
-            elif self.parking_status == 3: #exit
-                path_x, path_y = self.parking_path_adjust_x[::-1], self.parking_path_adjust_y[::-1]
-
-            elif self.parking_status == 4:
+            elif self.parking_status == 2:
                 path_x, path_y = self.parking_path_circle_x[::-1], self.parking_path_circle_y[::-1]
                 
-            elif self.parking_status >= 5:
+            elif self.parking_status >= 3:
                 is_mission_finished = True
                 path_x, path_y, _ = self.find_ref_path(car_pose,4,15)
-                
+
             # 현재 path에서 끝부분에 도착하면 다음 status로 변경
             path_kdtree = KDTree(list(zip(path_x, path_y)))
             _, cur_idx = path_kdtree.query(car_pose[:2])
-
             if cur_idx >= len(path_x)-self.stop_point:
                 self.parking_status += 1
                 self.parking_stop_time = time.time()
@@ -132,38 +126,20 @@ class Parking():
         return [], [path_x, path_y, self.calc_path_yaw(path_x, path_y)], False, gear, is_mission_finished
 
     def get_gear_parking(self):
-        if self.parking_status == 0: #전진
+        if self.parking_status == 0:
             gear = 0
 
-        elif self.parking_status == 1: #후진
+        elif self.parking_status == 1:
             if time.time() - self.parking_stop_time <= 2: # neutral
                 gear = 1
             else: gear = 2
 
-        elif self.parking_status == 2: #조정직진
-            if time.time() - self.parking_stop_time <= 2: # neutral
-                gear = 1
-                self.stop_point = 0
-                
-            else: 
-                gear = 0
-                self.stop_point = 5
-
-        elif self.parking_status == 3: #10초정지후 후진
-            if time.time() - self.parking_stop_time <= 1: # neutral
-                gear = 1
-                self.stop_point = 0
-            else: 
-                gear = 2
-                self.stop_point = 2
-
-        elif self.parking_status == 4: #전진
-            self.stop_point = 6
-            if time.time() - self.parking_stop_time <= 3: # neutral
+        elif self.parking_status == 2:
+            if time.time() - self.parking_stop_time <= 10: # neutral
                 gear = 1
             else: gear = 0
 
-        elif self.parking_status >= 5:
+        elif self.parking_status >= 3:
             gear = 0
 
         return gear
@@ -211,7 +187,6 @@ class Parking():
             p1 = (center1[0],0)
             p2 = ((center1[0]+center2[0])/2, (center1[1]+center2[1])/2)
             p3 = (parking_spot[0], parking_spot[1])
-            p4 = (parking_spot[0] + self.spot_adjustment_x + 0.2, parking_spot[1])
 
             # path1(직진) (현재위치 - p1)
             step_size = 0.2
@@ -248,21 +223,8 @@ class Parking():
 
             path2_x_utm, path2_y_utm = self.transform_waypoints_bl_2_utm(car_pose, path2_x, path2_y)
 
-            # path3 (정렬하게 해주는 path)
-            rotate_path3_x, rotate_path3_y = create_straight_path(p3, p4, step_size)
-            path3_x = []
-            path3_y = []
-
-            for x, y in zip(rotate_path3_x, rotate_path3_y):
-                x_new, y_new = rotate_point(x, y, parking_yaw[idx])        
-                path3_x.append(x_new)
-                path3_y.append(y_new)
-            
-            path3_x_utm, path3_y_utm = self.transform_waypoints_bl_2_utm(car_pose, path3_x, path3_y)
-
             self.parking_path_straight_x, self.parking_path_straight_y = path1_x_utm, path1_y_utm
             self.parking_path_circle_x, self.parking_path_circle_y = path2_x_utm, path2_y_utm
-            self.parking_path_adjust_x, self.parking_path_adjust_y = path3_x_utm, path3_y_utm
 
             return True
 

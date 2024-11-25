@@ -7,6 +7,9 @@ class WaySelector():
         self.way_nodes = way_nodes
 
         self.ways_kdtree = {}
+        print(self.ways.values())
+        print("=============")
+        print(self.way_nodes.keys())
         for way_id in self.ways:
             waypoints = [self.way_nodes[node_id] for node_id in self.ways[way_id]] # [(x1, y1), (x2, y2), ...]
             self.ways_kdtree[way_id] = KDTree(waypoints)
@@ -72,7 +75,7 @@ class WaySelector():
             next_way_direction = np.rad2deg(np.arctan2(self.way_nodes[way[1]][1]-self.way_nodes[way[0]][1], self.way_nodes[way[1]][0]-self.way_nodes[way[0]][0]))
 
             direction_similarity = abs((cur_way_direction - next_way_direction))
-            if direction_similarity < 50:
+            if direction_similarity < 50 or direction_similarity > 310:
                 candidate_ways.append(way_id)
 
         return candidate_ways

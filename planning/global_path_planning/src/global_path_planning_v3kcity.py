@@ -18,7 +18,7 @@ from std_msgs.msg import String, Float32, Bool, Int8
 from tf.transformations import quaternion_from_euler
 
 TRAFFIC_DETECT_DIST = 20 # [m], 정지선으로부터 몇 m 이내에 들어와야 신호등 인식을 시작할지
-TRAFFIC_STOP_DIST = 8 # [m], 정지선으로부터 몇 m 이내에 들어와야 신호등을 통해 정지를 할지
+TRAFFIC_STOP_DIST = 6 # [m], 정지선으로부터 몇 m 이내에 들어와야 신호등을 통해 정지를 할지
 
 NEXT_WAY_DIST = 3 # [m], 현재 위치와 다음 way의 첫 번째 노드의 거리 => 다음 way로 넘어가는 기준
 
@@ -50,9 +50,9 @@ Backspace: 모든 선택한 경로 취소
 """
 rospack = rospkg.RosPack()
 OSM_FILE_PATH = rospack.get_path('global_path_planning') + "/osm_files"
-# OSM_FILE_LIST = ["hitech_LINK.osm", "hitech_INTERSECTION_LINK.osm", "hitech_STOPLINE.osm","hitech_MISSION.osm"]
-OSM_FILE_LIST = ['KCITY_MAIN.osm', 'KCITY_OBSTACLE_LINK_B.osm',
-                 'KCITY_STOPLINE.osm', 'KCITY_MISSION.osm']
+# OSM_FILE_LIST = ["hitech_LINK.osm", "hitech_INTERSECTION_LINK.osm", "hitech2_STOPLINE.osm"]
+OSM_FILE_LIST = ['KCITY_MAIN_v3a.osm', 
+                 'KCITY_STOPLINE_v3b.osm', 'KCITY_MISSION_v2a.osm']
 
 class GlobalPathPlanning():
     def __init__(self):
@@ -102,7 +102,7 @@ class GlobalPathPlanning():
         self.ways = osmhandler.ways # {way1: [node1, node2, ...], way2:[node11,node12,...]}
         self.way_nodes = osmhandler.way_nodes # {node1:[x1,y1], node2:[x2,y2], ... }
         self.ways_info = osmhandler.ways_info
-        # print(self.ways_info)
+        print(self.ways_info)
         self.mission_way = {}
 
         self.mission = osmhandler.mission_areas
@@ -351,7 +351,7 @@ class GlobalPathPlanning():
                 gear_override = 1
 
                 elapsed_time = self.stopwatch.update()
-                if elapsed_time > 2.8:
+                if elapsed_time > 5:
                     gear_override = 0
                     self.traffic['status'] = 'finish'
 

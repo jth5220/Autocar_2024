@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version='0.6' upload='false' generator='JOSM'>
+  <node id='-29654' action='modify' lat='37.23963970545' lon='126.77343094378'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302498.6740712826' />
+    <tag k='y' v='4123779.8798658466' />
+  </node>
+  <node id='-29655' action='modify' lat='37.23965070429' lon='126.77343871282'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302499.39201054' />
+    <tag k='y' v='4123781.08408442' />
+  </node>
+  <node id='-29656' action='modify' lat='37.23966215418' lon='126.77344578201'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302500.0490403419' />
+    <tag k='y' v='4123782.339812899' />
+  </node>
+  <node id='-29657' action='modify' lat='37.2396741078' lon='126.77345200187'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302500.6320366975' />
+    <tag k='y' v='4123783.6532083247' />
+  </node>
+  <node id='-29658' action='modify' lat='37.23968667318' lon='126.77345677642'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302501.0884111834' />
+    <tag k='y' v='4123785.037501773' />
+  </node>
+  <node id='-29659' action='modify' lat='37.23969946861' lon='126.77346098608'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302501.4952731096' />
+    <tag k='y' v='4123786.448499832' />
+  </node>
+  <node id='-29660' action='modify' lat='37.23971288668' lon='126.77346222334'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302501.6400658477' />
+    <tag k='y' v='4123787.934792197' />
+  </node>
+  <node id='-29661' action='modify' lat='37.23972623491' lon='126.77346238988'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302501.6896886005' />
+    <tag k='y' v='4123789.4155690135' />
+  </node>
+  <node id='-29662' action='modify' lat='37.23973937853' lon='126.77345941985'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302501.4605201299' />
+    <tag k='y' v='4123790.8801885606' />
+  </node>
+  <node id='-29663' action='modify' lat='37.23975169771' lon='126.77345452779'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302501.058687228' />
+    <tag k='y' v='4123792.257341091' />
+  </node>
+  <node id='-29664' action='modify' lat='37.23976290841' lon='126.77344705143'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302500.4246978475' />
+    <tag k='y' v='4123793.516889587' />
+  </node>
+  <node id='-29665' action='modify' lat='37.2397730366' lon='126.77343842472'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302499.6858303275' />
+    <tag k='y' v='4123794.6587239895' />
+  </node>
+  <node id='-29666' action='modify' lat='37.2397811798' lon='126.77342768862'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302498.7546477322' />
+    <tag k='y' v='4123795.5847062054' />
+  </node>
+  <node id='-29667' action='modify' lat='37.239789323' lon='126.77341695252'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302497.8234653422' />
+    <tag k='y' v='4123796.5106885354' />
+  </node>
+  <node id='-29668' action='modify' lat='37.23979530288' lon='126.77340496785'>
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4' />
+    <tag k='speed_min' v='3' />
+    <tag k='x' v='302496.7758699088' />
+    <tag k='y' v='4123797.1992340367' />
+  </node>
+  <way id='-1820' action='modify'>
+    <nd ref='-29654' />
+    <nd ref='-29655' />
+    <nd ref='-29656' />
+    <nd ref='-29657' />
+    <nd ref='-29658' />
+    <nd ref='-29659' />
+    <nd ref='-29660' />
+    <nd ref='-29661' />
+    <nd ref='-29662' />
+    <nd ref='-29663' />
+    <nd ref='-29664' />
+    <nd ref='-29665' />
+    <nd ref='-29666' />
+    <nd ref='-29667' />
+    <nd ref='-29668' />
+    <tag k='code' v='1' />
+    <tag k='speed_max' v='4.2' />
+    <tag k='speed_min' v='3.5' />
+  </way>
+</osm>

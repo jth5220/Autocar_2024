@@ -12,7 +12,7 @@ def rotate_point(x, y, yaw):
     y_new = x * math.sin(yaw) + y * math.cos(yaw)
     return x_new, y_new
 
-def points_on_circle(center, radius, start_angle, end_angle, num_points=10):
+def points_on_circle(center, radius, start_angle, end_angle, num_points=15):
     angles = np.linspace(start_angle, end_angle, num_points)
     x = center[0] + radius * np.cos(angles)
     y = center[1] + radius * np.sin(angles)
@@ -24,10 +24,7 @@ def create_straight_path(start, end, step_size):
     
     # Calculate the total distance
     total_distance = np.sqrt((x_end - x_start)**2 + (y_end - y_start)**2)
-
-    if total_distance is None:
-        print("start point", x_start, y_start)
-        print("end point", x_end, y_end)
+    
     # Calculate the number of points
     num_points = int(total_distance / step_size) + 1
     
@@ -52,38 +49,24 @@ class Delivery():
         self.car_length = 1.6 # 차 길이
 
         # 파라미터 조정A
-        self.min_R1_A = 7.5 # entry중 시작지점에 가까운 원
-        self.min_R2_A = 7.5 # entry중 목표지점에 가까운 원
-        self.min_R3_A = 6.0 # exit중 시작지점에 가까운 원
-        self.min_R4_A = 6.0 # exit중 목표지점에 가까운 원
-        self.spot_adjustment_x_A = 0.3 # 조정위치
-        self.spot_adjustment_y_A = 1.2
-        self.delivery_margin_A = 2.0 #마진
+        self.min_R1_A = 6.5 # entry중 시작지점에 가까운 원
+        self.min_R2_A = 6.5 # entry중 목표지점에 가까운 원
+        self.min_R3_A = 4.5 # exit중 시작지점에 가까운 원
+        self.min_R4_A = 4.5 # exit중 목표지점에 가까운 원
+        self.spot_adjustment_x_A = -0.8 # 조정위치
+        self.spot_adjustment_y_A = 0.7
+        self.delivery_margin_A = 3.0 #마진
         
         # 파라미터 조정B
-        self.min_R1_B = 2.45 # entry중 시작지점에 가까운 원
-        self.min_R2_B = 2.45 # entry중 목표지점에 가까운 원
-        self.min_R3_B = 3.2 # exit중 시작지점에 가까운 원s
-        self.min_R4_B = 3.2 # exit중 목표지점에 가까운 원
-        self.spot_adjustment_x_B = 0.0# 조정위치 
-        self.spot_adjustment_y_B = 0.65
-        self.delivery_margin_B = 1.9 #마진
-        # 조정 위치를 줄이고 마진을 늘린다음에 미리 멈추는걸로 
+        self.min_R1_B = 3.5 # entry중 시작지점에 가까운 원
+        self.min_R2_B = 3.5 # entry중 목표지점에 가까운 원
+        self.min_R3_B = 4.0 # exit중 시작지점에 가까운 원
+        self.min_R4_B = 5.0 # exit중 목표지점에 가까운 원
+        self.spot_adjustment_x_B = -2.0# 조정위치
+        self.spot_adjustment_y_B = 0.0
+        self.delivery_margin_B =1.2 #마진
+
         self.stop_point = 6 #패스 끝 지점에서 멈추는 거리 설정
-
-        # self.min_R1_B = 2.6 # entry중 시작지점에 가까운 원
-        # self.min_R2_B = 2.6 # entry중 목표지점에 가까운 원
-        # self.min_R3_B = 4.0 # exit중 시작지점에 가까운 원s
-        # self.min_R4_B = 5.0 # exit중 목표지점에 가까운 원
-        # self.spot_adjustment_x_B = -1.7# 조정위치 
-        # self.spot_adjustment_y_B = 0.5
-        # self.delivery_margin_B = 0.8 #마진
-        # # 조정 위치를 줄이고 마진을 늘린다음에 미리 멈추는걸로 
-        # self.stop_point = 6 #패스 끝 지점에서 멈추는 거리 설정
-        # 후진2.0
-
-
-        
         
         self.path_is_made = False
         self.delivery_status = -1
@@ -93,7 +76,6 @@ class Delivery():
         # 2: exit2
         # 2: ref path 따라가기
         self.delivery_stop_time = None
-        self.delivery_onetime_stop = True
 
         self.spot_adjustment_x, self.spot_adjustment_y = None, None
         
@@ -118,14 +100,13 @@ class Delivery():
         elif self.path_is_made:
             if self.delivery_mode == "delivery_A":
                 if self.delivery_status == 0:
-                    self.stop_point = 9
                     path_x, path_y = self.delivery_path_entry_x, self.delivery_path_entry_y
 
                 elif self.delivery_status == 1:
                     path_x, path_y = self.delivery_path_exit_forward_x, self.delivery_path_exit_forward_y
-                    is_mission_finished = True
+
                 elif self.delivery_status >= 2:
-                    
+                    is_mission_finished = True
                     path_x, path_y, _ = self.find_ref_path(car_pose,4,15)
 
             if self.delivery_mode == "delivery_B":
@@ -137,18 +118,15 @@ class Delivery():
 
                 elif self.delivery_status == 2:
                     path_x, path_y = self.delivery_path_exit_forward_x, self.delivery_path_exit_forward_y
-                    is_mission_finished = True
+
                 elif self.delivery_status >= 3:
+                    is_mission_finished = True
                     path_x, path_y, _ = self.find_ref_path(car_pose,4,15)
 
             # 현재 path에서 끝부분에 도착하면 다음 status로 변경
             path_kdtree = KDTree(list(zip(path_x, path_y)))
             _, cur_idx = path_kdtree.query(car_pose[:2])
-            if self.delivery_onetime_stop == True:
-                self.delivery_stop_time = time.time()
-                self.delivery_onetime_stop = False
             if cur_idx >= len(path_x)-self.stop_point:
-                # if self.delivery_mode == 'delivery_B' and self.delivery_status == 1:
                 self.delivery_status += 1
                 self.delivery_stop_time = time.time()
 
@@ -161,13 +139,10 @@ class Delivery():
     def get_gear_delivery(self):
         if self.delivery_mode == 'delivery_A':
             if self.delivery_status == 0:
-                # if time.time() - self.delivery_stop_time <= 2: # neutral
-                #     gear = 1
-                # else:
                 gear = 0
 
             elif self.delivery_status == 1:
-                if time.time() - self.delivery_stop_time <= 5: # neutral
+                if time.time() - self.delivery_stop_time <= 10: # neutral
                     gear = 1
                 else: gear = 0
 
@@ -176,22 +151,15 @@ class Delivery():
 
         if self.delivery_mode =='delivery_B':
             if self.delivery_status == 0:
-                # if time.time() - self.delivery_stop_time <= 2: # neutral
-                #     gear = 1
-                # else:
-                self.stop_point = 11
                 gear = 0
 
             elif self.delivery_status == 1:
-                self.stop_point = 1
-                if time.time() - self.delivery_stop_time <= 5: # neutral
+                if time.time() - self.delivery_stop_time <= 10: # neutral
                     gear = 1
-                else:
-                    gear = 2 #후진
+                else: gear = 2 #후진
 
             elif self.delivery_status == 2:
-                self.stop_point = 6
-                if time.time() - self.delivery_stop_time <= 1: # neutral
+                if time.time() - self.delivery_stop_time <= 2: # neutral
                     gear = 1
                 else: gear = 0 #전진
 
@@ -349,7 +317,7 @@ class Delivery():
             # 표지판으로부터 떨어져야하는 거리
             back_distance = np.sqrt(Front_Right_R**2-self.min_R3_B**2)
             back_distance_v1 = back_distance - self.spot_adjustment_x_B # 내 현재 위치로부터 떨어져야하는 거리(대략 2미터 나오려나)
-            back_distance_v1 = back_distance_v1 + 0.4
+            back_distance_v1 = back_distance_v1 - 1.8
 
             # 5. 원3의 중심과 반지름(배달 구역에서 나가기 위한 원)
             radius3 = self.min_R3_B

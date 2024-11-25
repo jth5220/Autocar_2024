@@ -1,0 +1,167 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version='0.6' upload='false' generator='JOSM'>
+  <node id='-35593' action='modify' lat='37.23912368445' lon='126.7729619329'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='parking' />
+    <tag k='x' v='302455.7186945332' />
+    <tag k='y' v='4123723.601065645' />
+  </node>
+  <node id='-35594' action='modify' lat='37.2390930811' lon='126.77303539746'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='parking' />
+    <tag k='x' v='302462.1561742685' />
+    <tag k='y' v='4123720.051934055' />
+  </node>
+  <node id='-35595' action='modify' lat='37.23945692005' lon='126.7732745844'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='parking' />
+    <tag k='x' v='302484.3255440985' />
+    <tag k='y' v='4123759.9243155913' />
+  </node>
+  <node id='-35596' action='modify' lat='37.23949024353' lon='126.77319941136'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='parking' />
+    <tag k='x' v='302477.7436239256' />
+    <tag k='y' v='4123763.778825032' />
+  </node>
+  <node id='-35597' action='modify' lat='37.23912368445' lon='126.7729619329'>
+    <tag k='x' v='302455.7186945332' />
+    <tag k='y' v='4123723.601065645' />
+  </node>
+  <node id='-35598' action='modify' lat='37.23936102996' lon='126.77322589278'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='delivery_start' />
+    <tag k='x' v='302479.7555308651' />
+    <tag k='y' v='4123749.385958957' />
+  </node>
+  <node id='-35599' action='modify' lat='37.23932430606' lon='126.77330789973'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='delivery_start' />
+    <tag k='x' v='302486.934852864' />
+    <tag k='y' v='4123745.1398746055' />
+  </node>
+  <node id='-35600' action='modify' lat='37.23952016664' lon='126.77343945255'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='delivery_start' />
+    <tag k='x' v='302499.1168353542' />
+    <tag k='y' v='4123766.598036165' />
+  </node>
+  <node id='-35601' action='modify' lat='37.23955621037' lon='126.77335573712'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='delivery_start' />
+    <tag k='x' v='302491.7841850104' />
+    <tag k='y' v='4123770.7722055647' />
+  </node>
+  <node id='-35602' action='modify' lat='37.23936102996' lon='126.77322589278'>
+    <tag k='x' v='302479.7555308651' />
+    <tag k='y' v='4123749.385958957' />
+  </node>
+  <node id='-35603' action='modify' lat='37.24206426775' lon='126.77459523802'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='delivery_finish' />
+    <tag k='x' v='302608.2902102625' />
+    <tag k='y' v='4124046.480553639' />
+  </node>
+  <node id='-35604' action='modify' lat='37.24169500098' lon='126.77456533965'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='delivery_finish' />
+    <tag k='x' v='302604.6742673728' />
+    <tag k='y' v='4124005.5689501218' />
+  </node>
+  <node id='-35605' action='modify' lat='37.24169500098' lon='126.7744636852'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='delivery_finish' />
+    <tag k='x' v='302595.6563270304' />
+    <tag k='y' v='4124005.781036766' />
+  </node>
+  <node id='-35606' action='modify' lat='37.24206426775' lon='126.77449700053'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='delivery_finish' />
+    <tag k='x' v='302599.575436614' />
+    <tag k='y' v='4124046.685509137' />
+  </node>
+  <node id='-35607' action='modify' lat='37.24206426775' lon='126.77459523802'>
+    <tag k='x' v='302608.2902102625' />
+    <tag k='y' v='4124046.480553639' />
+  </node>
+  <node id='-35608' action='modify' lat='37.24218667622' lon='126.77445172586'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='lane_change' />
+    <tag k='x' v='302595.8785119322' />
+    <tag k='y' v='4124060.3624613113' />
+  </node>
+  <node id='-35609' action='modify' lat='37.24218667622' lon='126.7745730278'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='lane_change' />
+    <tag k='x' v='302606.6393455023' />
+    <tag k='y' v='4124060.1093816785' />
+  </node>
+  <node id='-35610' action='modify' lat='37.24242605222' lon='126.77456106846'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='lane_change' />
+    <tag k='x' v='302606.2030895107' />
+    <tag k='y' v='4124086.695585444' />
+  </node>
+  <node id='-35611' action='modify' lat='37.24242605222' lon='126.77444318346'>
+    <tag k='code' v='2' />
+    <tag k='mission' v='lane_change' />
+    <tag k='x' v='302595.7454111312' />
+    <tag k='y' v='4124086.9415377807' />
+  </node>
+  <node id='-35612' action='modify' lat='37.24218667622' lon='126.77445172586'>
+    <tag k='x' v='302595.8785119322' />
+    <tag k='y' v='4124060.3624613113' />
+  </node>
+  <way id='-29307' action='modify'>
+    <nd ref='-35611' />
+    <nd ref='-35610' />
+    <nd ref='-35609' />
+    <nd ref='-35608' />
+    <nd ref='-35611' />
+    <tag k='code' v='2' />
+    <tag k='mission' v='lane_change' />
+  </way>
+  <way id='-29308' action='modify'>
+    <nd ref='-35606' />
+    <nd ref='-35603' />
+    <nd ref='-35604' />
+    <nd ref='-35605' />
+    <nd ref='-35606' />
+    <tag k='code' v='2' />
+    <tag k='mission' v='delivery_finish' />
+  </way>
+  <way id='-29309' action='modify'>
+    <nd ref='-35598' />
+    <nd ref='-35599' />
+    <nd ref='-35600' />
+    <nd ref='-35601' />
+    <nd ref='-35598' />
+    <tag k='code' v='2' />
+    <tag k='mission' v='delivery_start' />
+  </way>
+  <way id='-29310' action='modify'>
+    <nd ref='-35593' />
+    <nd ref='-35594' />
+    <nd ref='-35595' />
+    <nd ref='-35596' />
+    <nd ref='-35593' />
+    <tag k='code' v='2' />
+    <tag k='mission' v='parking' />
+  </way>
+  <relation id='-58' action='modify'>
+    <member type='way' ref='-29309' role='outer' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+  <relation id='-59' action='modify'>
+    <member type='way' ref='-29310' role='outer' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+  <relation id='-60' action='modify'>
+    <member type='way' ref='-29308' role='outer' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+  <relation id='-61' action='modify'>
+    <member type='way' ref='-29307' role='outer' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+</osm>

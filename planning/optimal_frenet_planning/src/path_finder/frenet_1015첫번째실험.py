@@ -59,50 +59,39 @@ class Frenet(object):
         self.K_KAPPA = 0
         self.K_MEAN_S = 0
         self.K_SHORT = 0
-        self.K_COLLISION = 0.0
+        self.K_COLLISION = 100
 
         if possible_change_direction == 'right':
             self.DF_SET = np.array([-self.LANE_WIDTH, 0.0])
-            self.DDF_SET = [0.0]
-            self.max_ob_radius = 2.0
-            self.min_ob_radius = 1.0
+            self.ob_radius = 0.7
             self.MAX_SF = 20.0
             self.MIN_SF = 4.0
             self.DS = 6.0
 
         elif possible_change_direction == 'left':
             # self.DF_SET = np.array([-0.3 * self.LANE_WIDTH, 0.0, self.LANE_WIDTH])
-            self.DF_SET = np.array([-0.05 * self.LANE_WIDTH, 0.0, self.LANE_WIDTH * 0.6, self.LANE_WIDTH*1.0])
-            self.DDF_SET = [0.0]
-            self.max_ob_radius = 2.0
-            self.min_ob_radius = 0.5
-
-            self.MAX_SF = 12.0
-            self.MIN_SF = 6.0
-            self.DS = 3.0
-
-            # self.MAX_SF = 20.0
-            # self.MIN_SF = 4.0
-            # self.DS = 6.0
+            self.DF_SET = np.array([-0.1 * self.LANE_WIDTH, 0.0, self.LANE_WIDTH * 0.8, self.LANE_WIDTH*1.2])
+            self.ob_radius = 0.7
+            self.MAX_SF = 20.0
+            self.MIN_SF = 3.0
+            self.DS = 6.0
 
         elif possible_change_direction == 'both':
             self.DF_SET = np.array([-self.LANE_WIDTH, 0.0, self.LANE_WIDTH])
-            self.DDF_SET = [0.0]
-            self.max_ob_radius = 2.0
-            self.min_ob_radius = 1.0
+            self.ob_radius = 0.7
             self.MAX_SF = 20.0
             self.MIN_SF = 4.0
             self.DS = 6.0
 
         else: # 같은 차선 내
-            self.DF_SET = np.array([-self.LANE_WIDTH * 0.20, -self.LANE_WIDTH * 0.15, 0.0, 
-                                   self.LANE_WIDTH * 0.1, self.LANE_WIDTH * 0.2, self.LANE_WIDTH * 0.3])
+            self.DF_SET = np.array([-self.LANE_WIDTH * 0.25, -self.LANE_WIDTH * 0.15, 0.0, 
+                                   self.LANE_WIDTH * 0.15, self.LANE_WIDTH * 0.25])
                                     #   self.LANE_WIDTH * 0.2, self.LANE_WIDTH * 0.3, self.LANE_WIDTH * 0.35])
-            self.DDF_SET = [-0.3, 0.0, 0.3]
-            self.max_ob_radius = 0.5
-            self.min_ob_radius = 0.32
-            self.MAX_SF = 4.0 # 길이
-            self.MIN_SF = 2.0 # 곡률
+            self.DDF_SET = [-0.5, -0.3, 0.0, 0.3, 0.5]
+            # self.DDF_SET = [-0.5, -0.3, 0.0, 0.3, 0.5]
+            self.ob_radius = 0.35
+            self.MAX_SF = 14.5 # 길이
+            self.MIN_SF = 0.5 # 곡률
             self.DS = 2.0
             
             # self.DF_SET = np.array([-self.LANE_WIDTH * 0.1, 0.0, 
@@ -178,7 +167,7 @@ class Frenet(object):
                     + self.K_KAPPA * mean_kappa \
                     + self.K_MEAN_S * fp.kappa \
                     + self.K_COLLISION / (fp.gap + 0.01)
-            # print('cost:', fp.d[-1], ',', fp.gap, ',' ,fp.c)
+            print('cost:', fp.d[-1], ',', fp.gap, ',' ,fp.c)
             if min_cost > fp.c:
                 min_cost = fp.c
                 opt_path = fp
@@ -209,10 +198,6 @@ class Frenet(object):
         di = self.prev_opt_path.p(si)
         ddi = self.prev_opt_path.dp(si)
         dddi = self.prev_opt_path.ddp(si)
-
-        # ddi = max(ddi,0)
-        # dddi = max(dddi,0)
-        print('di:', di,ddi ,dddi)
         # ddi = -0.05
         #path final condition
         ddf = 0.0
@@ -226,9 +211,9 @@ class Frenet(object):
 
         frenet_paths = []
         for df in self.DF_SET:
-            for sf in np.arange(si+self.MIN_SF, si+self.MAX_SF + self.DS, self.DS):
-                for ddf in self.DDF_SET:  # 방향 전환을 위한 가속도 변화
-                    # for dddi in [0, -0.05]:
+            for sf in np.arange(si+self.MIN_SF, si+self.MAX_SF, self.DS):
+                # for ddf in self.DDF_SET:  # 방향 전환을 위한 가속도 변화
+                    # for ddi in [0, -0.05]:
                         fp = FrenetPath(si, di, ddi, dddi, sf, df, ddf, dddf)
                         frenet_paths.append(fp)
 
@@ -260,8 +245,7 @@ class Frenet(object):
         for ob_x, ob_y, ob_radius_ in obstacles:
             d = [((_x - ob_x) ** 2 + (_y - ob_y) ** 2) for (_x, _y) in zip(fp.x, fp.y)]
             
-            ob_radius = min(ob_radius_,self.max_ob_radius)
-            ob_radius = max(ob_radius,self.min_ob_radius)
+            ob_radius = min(self.ob_radius, ob_radius_)
             # ob_radius = self.ob_radius
             collision_dist = np.sqrt(min(d)) - self.robot_radius - ob_radius
             # fp.gap = np.sqrt(min(d))
@@ -303,14 +287,12 @@ class Frenet(object):
 
         kappa = path.kappa
 
-        if kappa > 0.08:
+        if kappa > 0.25:
             self.is_avoiding = True
             # print('장애물 cost:', path.gap)
         
-        else:
+        if self.is_avoiding == True and abs(car_d) < 0.3 and kappa <= 0.5:
             self.is_avoiding = False
-        # if self.is_avoiding == True and abs(car_d) < 0.3 and kappa <= 0.5:
-        #     self.is_avoiding = False
 
         return 
     

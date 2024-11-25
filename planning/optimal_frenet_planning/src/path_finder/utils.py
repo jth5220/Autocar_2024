@@ -74,7 +74,8 @@ class CubicSpline1D:
         # calc spline coefficient b and d
         for i in range(self.nx - 1):
             d = (self.c[i + 1] - self.c[i]) / (3.0 * h[i])
-            b = 1.0 / h[i] * (self.a[i + 1] - self.a[i]) - h[i] / 3.0 * (2.0 * self.c[i] + self.c[i + 1])
+            b = 1.0 / h[i] * (self.a[i + 1] - self.a[i]) \
+                - h[i] / 3.0 * (2.0 * self.c[i] + self.c[i + 1])
             self.d.append(d)
             self.b.append(b)
 

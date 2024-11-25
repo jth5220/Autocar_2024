@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from stopwatch import StopWatch
 import numpy as np
 from scipy.spatial import KDTree
 
@@ -17,12 +16,7 @@ from nav_msgs.msg import Odometry
 from std_msgs.msg import String, Float32, Bool, Int8
 from tf.transformations import quaternion_from_euler
 
-TRAFFIC_DETECT_DIST = 20 # [m], 정지선으로부터 몇 m 이내에 들어와야 신호등 인식을 시작할지
-TRAFFIC_STOP_DIST = 8 # [m], 정지선으로부터 몇 m 이내에 들어와야 신호등을 통해 정지를 할지
-
 NEXT_WAY_DIST = 3 # [m], 현재 위치와 다음 way의 첫 번째 노드의 거리 => 다음 way로 넘어가는 기준
-
-CHANGE_DIRECTION = ['both', 'left', 'right', 'none']
 
 # ==================================================================================
 import pyproj
@@ -50,9 +44,10 @@ Backspace: 모든 선택한 경로 취소
 """
 rospack = rospkg.RosPack()
 OSM_FILE_PATH = rospack.get_path('global_path_planning') + "/osm_files"
-# OSM_FILE_LIST = ["hitech_LINK.osm", "hitech_INTERSECTION_LINK.osm", "hitech_STOPLINE.osm","hitech_MISSION.osm"]
-OSM_FILE_LIST = ['KCITY_MAIN.osm', 'KCITY_OBSTACLE_LINK_B.osm',
-                 'KCITY_STOPLINE.osm', 'KCITY_MISSION.osm']
+print(OSM_FILE_PATH)
+# OSM_FILE_LIST = ["hitech_LINK.osm", "hitech_INTERSECTION_LINK.osm", "hitech2_STOPLINE.osm"]
+OSM_FILE_LIST = ['KCITY_TUNNEL_INTERSECTION_LINK.osm', 'KCITY_TUNNEL_LINK.osm', 
+                 'KCITY_TUNNEL_MISSION.osm']
 
 class GlobalPathPlanning():
     def __init__(self):
@@ -70,13 +65,10 @@ class GlobalPathPlanning():
         self.is_published_once = False
         self.selected_ways = None
         self.location = None
-        self.stopwatch = None
 
         # Driving에서 쓰이는 변수들
         self.prev_way = None
-        self.possible_change_direction = 'both'
         self.cur_way = {'id':None,
-                        'change_direction':None,
                         'idx':0,
                         'stopline_id':None,
                         'waypoints':None,
@@ -84,9 +76,6 @@ class GlobalPathPlanning():
                         'cluster_ROI':None,
                         'speed_max':2.5,
                         'speed_min':2.0}
-
-        # traffic light
-        self.traffic = {'status':None, 'detected_sign':[], 'target_sign':None}
 
         self.driving_mode = 'normal_driving' # ['normal_driving', 'obstacle_avoiding', 'intersect', 'parking', 'delivery']
         self.is_avoiding = False
@@ -102,7 +91,7 @@ class GlobalPathPlanning():
         self.ways = osmhandler.ways # {way1: [node1, node2, ...], way2:[node11,node12,...]}
         self.way_nodes = osmhandler.way_nodes # {node1:[x1,y1], node2:[x2,y2], ... }
         self.ways_info = osmhandler.ways_info
-        # print(self.ways_info)
+        print(self.ways_info)
         self.mission_way = {}
 
         self.mission = osmhandler.mission_areas
@@ -139,18 +128,16 @@ class GlobalPathPlanning():
         # Subscribers
         self.location_sub = rospy.Subscriber('/location', Odometry, self.callback_location) # 종방향 에러 계산할 때
         self.is_avoiding_sub = rospy.Subscriber('/is_avoiding', Bool, self.callback_is_avoiding)
-        self.traffic_sub = rospy.Subscriber('/traffic_sign', String, self.callback_traffic)
 
         # Publishers
         self.closest_waypoints_pub = rospy.Publisher('/global_closest_waypoints', PoseArray, queue_size=10)
         self.waypoints_pub = rospy.Publisher('/global_waypoints', PoseArray, queue_size=10)
         self.driving_mode_pub = rospy.Publisher('/driving_mode', String, queue_size=10)
-        self.traffic_mode_pub = rospy.Publisher('/mode/traffic', String, queue_size=10)
         self.gear_override_pub = rospy.Publisher('/gear/override', Int8, queue_size=10)
 
         self.cluster_ROI_pub = rospy.Publisher('/cluster_ROI', String, queue_size=10)
         self.speed_maxmin_pub = rospy.Publisher('/speed_maxmin', Vector3, queue_size=10)
-        self.way_change_pub = rospy.Publisher('/way_change_signal', Bool, queue_size=10)
+
         # Timers
         self.timer_driving = rospy.Timer(rospy.Duration(0.1), self.callback_timer_driving)
         self.timer_selecting = rospy.Timer(rospy.Duration(0.1), self.callback_timer_selecting_ways_by_key_input)
@@ -173,54 +160,36 @@ class GlobalPathPlanning():
         # print(f"cur way: {self.cur_way['id']}")
         # print("self.mission_way", self.mission_way)
 
-        # waypoints & possible_change_direction publish
+        # waypoints publish
         if self.cur_way['id'] != self.prev_way: # cur_way가 바뀌면
             self.prev_way = self.cur_way['id']
 
             # 차선 변경 방향
-            # print("self.cur_way['id']", CHANGE_DIRECTION[self.ways_info['change_direction'][self.cur_way['id']]])
-            self.cur_way['change_direction'] = CHANGE_DIRECTION[self.ways_info['change_direction'][self.cur_way['id']]]
             self.cur_way['path'] = self.ways_info['path'][self.cur_way['id']]
             self.cur_way['cluster_ROI'] = self.ways_info['cluster_ROI'][self.cur_way['id']]
             self.cur_way['speed_max'] = self.ways_info['speed_max'][self.cur_way['id']]
             self.cur_way['speed_min'] = self.ways_info['speed_min'][self.cur_way['id']]
-
-            # traffic
-            self.traffic['status'] = None
-            self.traffic['target_sign'] = self.ways_info['traffic'][self.cur_way['id']]
-            self.stopwatch = None
-            
+            print("현재 path:", self.cur_way['path'])
             self.cur_way['waypoints'] = self.get_waypoints()
 
             # 근처 ways에 대한 waypoints publish
             global_waypoints_msg = self.make_waypoints_msg(self.cur_way['waypoints'], 
-                                                            self.cur_way['change_direction'],
+                                                            'utm',
                                                             self.cur_way['path'])
             self.waypoints_pub.publish(global_waypoints_msg)
-            
-            self.cluster_ROI_pub.publish(self.cur_way['cluster_ROI'])
 
-            self.way_change_pub.publish(True)
+            self.cluster_ROI_pub.publish(self.cur_way['cluster_ROI'])
 
             speed_maxmin_msg = Vector3(x=self.cur_way['speed_max'], y=self.cur_way['speed_min'])
             self.speed_maxmin_pub.publish(speed_maxmin_msg)
 
         driving_mode = self.update_driving_mode(self.cur_way['id'])
 
-        _, min_dist_stopline = self.update_stopline_dist(self.location)
-        
-        # 신호등 체크
-        gear_override = self.update_traffic(min_dist_stopline) 
-
         # near_ waypoints
         near_waypoints, _ = self.get_near_waypoints()
         
         # ROS
         self.driving_mode_pub.publish(driving_mode)
-
-        self.gear_override_pub.publish(gear_override)
-
-        self.traffic_mode_pub.publish(self.traffic['status'])
 
         # near_waypoints publish (For visualization)
         near_waypoints_msg = self.make_waypoints_msg(near_waypoints, 'utm', 'none')
@@ -235,23 +204,6 @@ class GlobalPathPlanning():
     def callback_is_avoiding(self, is_avoiding_msg):
         self.is_avoiding = is_avoiding_msg.data
         return
-    
-    def callback_traffic(self, traffic_msg):
-        self.traffic['detected_sign'] = [item.strip() for item in traffic_msg.data.split(',')]  
-        # self.traffic_detected = [item.strip() for item in traffic_msg.data.split(',')]  
-        return
-    
-    def update_stopline_dist(self, car_position):
-        stopline_id = self.stopline_way.get(self.cur_way['id'], None)
-        # print("정지선:", stopline_id)
-        if stopline_id is None:
-            return None, np.inf
-        
-        stopline_nodes = self.stopline[stopline_id]
-        stp_points = [self.stopline_nodes[v] for v in stopline_nodes]
-        stp_mid_point = [(c1 + c2) / 2 for c1, c2 in zip(*stp_points)]
-        stp_dist = np.sqrt((stp_mid_point[0] - car_position[0])**2 + (stp_mid_point[1] - car_position[1])**2)
-        return stopline_id, stp_dist
     
     def update_mission_status(self, cur_way, car_pos):
         cur_mission_id = self.mission_way.get(cur_way, None)
@@ -318,52 +270,6 @@ class GlobalPathPlanning():
             self.prev_way = self.cur_way['id']
 
         return self.cur_way['id']
-    
-    def update_traffic(self, distance_stopline):
-        gear_override = 0
-
-        # Traffic detection 시작 여부 1: 신호 인식 필요 없는 곳은 return
-        if self.traffic['target_sign'] == 'no_traffic':
-            return 0
-        
-        if self.traffic['status'] == 'finish':
-            return 0
-        
-        # Traffic detection 시작 여부 2: 정지선으로부터 일정거리 이내 들어오면 인식 시작
-        if distance_stopline < TRAFFIC_DETECT_DIST:
-            print('신호등 인식 중')
-            self.traffic['status'] = 'detect'
-
-        # 정지선으로부터 더 가까워지면 정지 여부 결정
-        if distance_stopline < TRAFFIC_STOP_DIST:
-            if self.stopwatch is None:
-                self.stopwatch = StopWatch()
-                self.stopwatch.start()
-
-            print('traffic_detected:', self.traffic['detected_sign'])
-            print('target sign: ',self.traffic['target_sign'])
-            if self.traffic['target_sign'] == 'left' and ('Left' in self.traffic['detected_sign'] or
-                                                           'Straightleft' in self.traffic['detected_sign']): #'Straightleft'
-                gear_override = 0
-                self.traffic['status'] = 'finish'
-
-            elif self.traffic['target_sign'] == 'right':
-                gear_override = 1
-
-                elapsed_time = self.stopwatch.update()
-                if elapsed_time > 2.8:
-                    gear_override = 0
-                    self.traffic['status'] = 'finish'
-
-            elif self.traffic['target_sign'] == 'straight' and ('Green' in self.traffic['detected_sign'] or \
-                                                        'Straightleft' in self.traffic['detected_sign'] or \
-                                                        'Yellow' in self.traffic['detected_sign']):
-                gear_override = 0
-                self.traffic['status'] = 'finish'
-
-            else:
-                gear_override = 1
-        return gear_override
     
     def get_waypoints(self):
         # waypoints
@@ -471,8 +377,8 @@ class GlobalPathPlanning():
         self.stopline_way = {}
 
         for way_id in selected_ways:
-            # if self.ways_info['type'][way_id] != 0 :
-            #     continue
+            if self.ways_info['type'][way_id] != 0:
+                continue
             waypoints = [self.way_nodes[node_id] for node_id in self.ways[way_id]] # [(x1, y1), (x2, y2), ...]
             selected_ways_kdtree[way_id] = KDTree(waypoints)
 
@@ -605,6 +511,8 @@ class GlobalPathPlanning():
                 pose.position.z = 0
             elif path == 'frenet':
                 pose.position.z = 1
+            elif path == 'u_turn':
+                pose.position.z = 2
             else:
                 pose.position.z = 0
         
