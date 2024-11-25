@@ -4,6 +4,7 @@
   
   <!-- Node -->
   <node pkg="util" type="autocar_tf.py" name="autocar_tf" />
+  <node pkg="util" type="topic_remap.py" name="topic_remap" />
   
 </launch> 
 
